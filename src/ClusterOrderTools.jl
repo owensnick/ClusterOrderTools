@@ -1,7 +1,7 @@
 module ClusterOrderTools
 
 using Clustering, Random, Statistics
-using Plots, ProgressMeter
+using ProgressMeter
 
 export kmeansorder, evalclustering
 
@@ -34,14 +34,10 @@ function evalclustering(X, ks=2:2:40)
     
     bic = n*log.(ci./(n*m)) + ks.*log(n)
     
-    [ci ks 2*size(X, 1).*ks] |> display
-    aic = ci + 2*size(X, 1).*ks
-    phs = [plot(ks[1:end-1], getindex.(ri, i), xticks=ks, marker=(stroke(:white))) for i = 1:4]
-
-    push!(phs, plot(ks[1:end-1], vi, xticks=ks, marker=(stroke(:white))))
-    push!(phs, plot(ks, r², xticks=ks, marker=(stroke(:white))))
     
-    plot(phs..., layout=(1, length(phs)), size=(1500, 300), leg=false)
+    aic = ci + 2*size(X, 1).*ks
+
+    (ks=ks, randindex=ri, varinfo=vi, costs=ci, rtot =rtot, rsquared=r², bic=bic, aic=aic)
 end
 
 
