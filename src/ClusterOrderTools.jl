@@ -3,7 +3,7 @@ module ClusterOrderTools
 using Clustering, Random, Statistics
 using ProgressMeter
 
-export kmeansorder, evalclustering
+export kmeansorder, evalclustering, average_heatmap, average_heatmap_vert
 
 function kmeansorder(X, k, sr=1618)
     if k == 1
@@ -40,6 +40,75 @@ function evalclustering(X, ks=2:2:40)
     (ks=ks, randindex=ri, varinfo=vi, costs=ci, rtot =rtot, rsquared=r², bic=bic, aic=aic)
 end
 
+
+function average_heatmap(H::Vector{T}, δ) where {T}
+    n = length(H)
+
+    w = cld(n, δ)
+    AH = zeros(Float64, w)
+    te = zeros(Int, w)
+    for i = 1:n
+        wi = cld(i, δ)
+        te[wi] += 1
+        AH[wi] += H[i]
+    end
+    if te[end] < 0.75δ
+        AH[end] += AH[end-1]
+        te[end] += te[end-1]
+    end
+    AH./te
+end
+
+
+average_heatmap(H, δh, δv) = average_heatmap_vert(average_heatmap(H, δh), δv)
+
+function average_heatmap_vert(H, δ=2)
+    
+    n, m = size(H)
+    
+    w = cld(n, δ)
+    AH = zeros(Float64, w, m)
+    te = zeros(Int, w)
+    for i = 1:m
+        for j = 1:n
+            wj = cld(j, δ)
+            (i == 1) && (te[wj] += 1)
+            AH[wj, i] += H[j, i]
+        end
+    end
+
+    if te[end] < 0.75δ
+        for i = 1:m
+            AH[end, i] += AH[end-1, i]
+        end
+        te[end] += te[end-1]
+    end
+
+    AH./te
+end
+
+function average_heatmap(H, δ=2)
+    
+    n, m = size(H)
+    w = cld(m, δ)
+    
+    AH = zeros(Float64, n, w)
+    te = zeros(Int, w)
+    for i = 1:m
+        wi = cld(i, δ)
+        te[wi] += 1
+        for j = 1:n
+            AH[j, wi] += H[j, i]
+        end
+    end
+    if te[end] < 0.75δ
+        for j = 1:n
+            AH[j, end] += AH[j, end-1]
+        end
+        te[end] += te[end-1]
+    end
+    AH./te'
+end
 
 
 end # module
